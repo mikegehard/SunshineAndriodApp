@@ -1,16 +1,17 @@
 package com.github.msgehard.sunshine.app;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.*;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -34,6 +35,12 @@ public class ForecastFragment extends Fragment {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        updateWeatherData();
+    }
+
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.forecastfragment, menu);
     }
@@ -49,11 +56,17 @@ public class ForecastFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
-            new FetchWeatherTask().execute("Boulder, CO");
+            updateWeatherData();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void updateWeatherData() {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = sharedPref.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
+        new FetchWeatherTask().execute(location);
     }
 
     @Override
@@ -61,21 +74,11 @@ public class ForecastFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        List<String> weatherData = new ArrayList<String>();
-
-        weatherData.add("Today - Sunny - 88/63");
-        weatherData.add("Tomorrow - Foggy - 70/46");
-        weatherData.add("Weds - Sunny - 88/63");
-        weatherData.add("Thurs - Sunny - 88/63");
-        weatherData.add("Fri - Sunny - 88/63");
-        weatherData.add("Sat - Sunny - 88/63");
-        weatherData.add("Sunday - Sunny - 88/63");
-
         mForecastAdapter = new ArrayAdapter<String>(
                 getActivity(),
                 R.layout.list_item_forecast,
                 R.id.list_item_forecast_textview,
-                weatherData
+                new ArrayList<String>()
         );
         ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
 
